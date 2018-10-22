@@ -3,8 +3,16 @@
 #include <windows.h>
 #include <WinSock.h>
 #include <string>
+#include <vector>
 
 using namespace std;
+
+typedef struct  
+{
+	BOOL	m_isDir;//为目录该变量为TRUE，否则为FALSE
+	char	m_fileName[MAX_PATH + 2];//文件名
+	__int64	m_fileSize;//文件大小
+}Ftp_File_s;
 
 class CFtpClient
 {
@@ -98,10 +106,11 @@ public:
 	*	函数名：	list
 	*	函数说明：	列出指定目录下的所有子目录及子文件信息
 	*	参数描述：	@param path[输入参数]待列出的目录路径，可以是相对路径或绝对路径
+	*	参数描述：	@param fileList[输出参数]ftp返回的文件列表放入该变量中。
 	*	返回值：	void
 	*
 	**************************************/
-	void		list(const string &path);
+	void		list(const string &path,vector<Ftp_File_s*> &fileList);
 
 	/*************************************
 	*
@@ -248,9 +257,28 @@ private:
 	**************************************/
 	bool	openDataChannel(ULONG serverIP,USHORT port);
 
-	int	parseLines(char *msg,int bytes);
+	/*************************************
+	*
+	*	函数名：	parseLines
+	*	函数说明：	一行一行的解析list返回的数据。
+	*	参数描述：	@param msg[输入参数]收到的数据缓存区
+	*	参数描述：	@param bytes[输入参数]收到数据字节数
+	*	参数描述：	@param fileList[输出参数]把解析出的文件信息存入到该变量中
+	*	返回值：	返回从msg中已经解析出的字节数
+	*
+	**************************************/
+	int	parseLines(char *msg, int bytes, vector<Ftp_File_s*> &fileList);
 
-	void parseFtpFileInfo(char *msg,int len);
+	/*************************************
+	*
+	*	函数名：	parseFtpFileInfo
+	*	函数说明：	解析一条文件信息，放入到fileList中
+	*	参数描述：	char * msg
+	*	参数描述：	vector<Ftp_File_s * > & fileList
+	*	返回值：	void
+	*
+	**************************************/
+	void parseFtpFileInfo(char *msg, vector<Ftp_File_s*> &fileList);
 private:
 	SOCKET	m_socket;//用于ftp控制连接的socket
 	SOCKET	m_dataSocket;//用于ftp数据传输的socket

@@ -121,7 +121,7 @@ string	CFtpClient::pwd()
 	return respStr.substr(left+1,right-left-1);
 }
 
-void CFtpClient::list(const string &path)
+void CFtpClient::list(const string &path,vector<Ftp_File_s*> &fileList)
 {
 	USHORT	port = 0;
 	ULONG	serverIP = 0;
@@ -145,7 +145,7 @@ void CFtpClient::list(const string &path)
 		if(strstr(recvBuf,"\r\n")!=NULL)
 		{
 			//parseBytes用于存储一次parseLines处理了多少字节。
-			int parseBytes = parseLines(recvBuf,totalBytes);
+			int parseBytes = parseLines(recvBuf,totalBytes,fileList);
 			if(totalBytes - parseBytes > 0)
 			{
 				memcpy(recvBuf,recvBuf+parseBytes,totalBytes-parseBytes);
@@ -377,7 +377,7 @@ bool CFtpClient::openDataChannel(ULONG serverIP,USHORT port)
 	return true;
 }
 
-int CFtpClient::parseLines(char *msg,int bytes)
+int CFtpClient::parseLines(char *msg, int bytes, vector<Ftp_File_s*> &fileList)
 {
 	int		curPos = 0;
 	char	*tokEndPos = NULL;
@@ -385,21 +385,22 @@ int CFtpClient::parseLines(char *msg,int bytes)
 	while( (tokEndPos=strstr(tokStartPos,"\r\n")) != NULL)
 	{
 		*tokEndPos = 0;
-		this->parseFtpFileInfo(tokStartPos,tokEndPos-tokStartPos);
+		this->parseFtpFileInfo(tokStartPos,fileList);
 		tokStartPos = tokEndPos + 2;
 	}
 	return tokStartPos - msg;
 }
 
-void CFtpClient::parseFtpFileInfo(char *msg,int len)
+void CFtpClient::parseFtpFileInfo(char *msg, vector<Ftp_File_s*> &fileList)
 {
+	Ftp_File_s	*fileInfo = new Ftp_File_s;
 	if(msg[0]=='-')
 	{
-		printf("文件\t");
+		fileInfo->m_isDir = FALSE;
 	}
 	else
 	{
-		printf("目录\t");
+		fileInfo->m_isDir = TRUE;
 	}
 	//tok+1为第二部分的开始
 	char *tok = strchr(msg,' ');
@@ -417,7 +418,7 @@ void CFtpClient::parseFtpFileInfo(char *msg,int len)
 	char *byteEnd = strchr(tok,' ');
 	//当前byteEnd+1为第6部分内容。
 	*byteEnd = 0;
-	printf("文件大小：%I64d\t",_atoi64(tok));
+	fileInfo->m_fileSize = _atoi64(tok);
 	
 	//执行完strchr后tok+1为第7部分内容
 	tok = strchr (byteEnd+1, ' ');
@@ -427,5 +428,8 @@ void CFtpClient::parseFtpFileInfo(char *msg,int len)
 	
 	//执行完strchr后tok+1为第9部分内容
 	tok = strchr(tok+1,' ');
-	printf("文件名:%s\t\n",tok+1);
+	memset(fileInfo->m_fileName, 0, sizeof(fileInfo->m_fileName));
+	int	bytes = strlen(tok + 1) > MAX_PATH ? MAX_PATH : strlen(tok + 1);
+	memcpy(fileInfo->m_fileName, tok + 1, bytes);
+	fileList.push_back(fileInfo);
 }
