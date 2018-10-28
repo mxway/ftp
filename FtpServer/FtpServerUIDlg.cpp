@@ -159,10 +159,9 @@ HCURSOR CFtpServerUIDlg::OnQueryDragIcon()
 void CFtpServerUIDlg::OnBnClickedButton1()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	/*m_server = new CFtpServer;
+	m_server = new CFtpServer;
 	m_server->CreateThread(TEXT("服务线程"));
-	m_server->StartThread();*/
-	parseRealPath("/plugin/123/../mengxl/");
+	m_server->StartThread();
 }
 
 

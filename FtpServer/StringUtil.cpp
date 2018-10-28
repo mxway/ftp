@@ -677,14 +677,6 @@ CStringUtil CStringUtil::ReplaceStr(TCHAR *prmSrc, TCHAR *prmDst)
 			tmpPos += _tcslen(prmSrc);
 			continue;
 		}
-		/*if (_tcsncmp(m_Buf + tmpPos, prmSrc, _tcslen(prmSrc) * sizeof(TCHAR)) == 0)
-		{
-			tmpResult.Append(m_Buf, tmpLastPos, tmpPos - tmpLastPos);
-			tmpResult.Append(prmDst);
-			tmpLastPos = tmpPos + _tcslen(prmSrc);
-			tmpPos += _tcslen(prmSrc);
-			continue;
-		}*/
 		tmpPos++;
 	}
 	if (tmpLastPos < m_BufLen)

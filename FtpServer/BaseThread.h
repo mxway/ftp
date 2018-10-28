@@ -3,13 +3,7 @@
 #define BASE_THREAD_INCLUDE_H
 
 #include <windows.h>
-#include <string>
-
-#ifdef _UNICODE
-#define CStringUtil	std::wstring
-#else
-#define CStringUtil std::string
-#endif
+#include "StringUtil.h"
 
 #define WM_RUNTHREAD		WM_USER+0x100
 #define WM_COMPLETETHREAD	WM_USER+0x101

@@ -8,8 +8,11 @@
 ****************************************************/
 #pragma once
 #include "ftp.h"
+#include "StringUtil.h"
 
-void	parseRealPath(LPCTSTR prmPath);
+CStringUtil	GetRealPath(LPCTSTR prmPath);
+
+CStringUtil	GetParentPath(LPCTSTR prmPath);
 
 class CFtpLoginCommand :public CFtpCommand
 {
@@ -24,6 +27,18 @@ public:
 };
 
 class CCwdCommand :public CFtpCommand
+{
+public:
+	void		processCommand(FTP_Connection_s *conn);
+};
+
+class CCDupCommand:public CFtpCommand
+{
+public:
+	void		processCommand(FTP_Connection_s *conn);
+};
+
+class CNoopCommand:public CFtpCommand
 {
 public:
 	void		processCommand(FTP_Connection_s *conn);

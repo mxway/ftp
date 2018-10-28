@@ -3,6 +3,7 @@
 #include "ftp.h"
 #include "BaseThread.h"
 #include <vector>
+#include <string>
 
 class CFtpServer:public CBaseThread
 {

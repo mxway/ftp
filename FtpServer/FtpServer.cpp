@@ -66,9 +66,10 @@ void CFtpServer::onAccept(evconnlistener *listener,evutil_socket_t fd, struct so
 	char	msg[]="220 the ftp server is written by mengxl\r\n";
 	bufferevent *bev = bufferevent_socket_new(base,fd,BEV_OPT_CLOSE_ON_FREE);
 	bufferevent_setcb(bev,socket_read_cb,NULL,socket_close_cb,this);
-	struct timeval tv = { 10, 0 };
+	struct timeval tv = { 30, 0 };
 	bufferevent_set_timeouts(bev, &tv, NULL);
 	FTP_Connection_s	*conn = new FTP_Connection_s;
+	conn->m_rootDir = TEXT("F:/root");
 	conn->m_fd = fd;
 	conn->m_bev = bev;
 	conn->m_status = FTP_CONNECTED;
@@ -163,15 +164,24 @@ void CFtpServer::registerCallbacks()
 	CFtpLoginCommand *logCommand = new CFtpLoginCommand;
 	CPwdCommand		 *pwdComand = new CPwdCommand;
 	CQuitCommand	 *quitCommand = new CQuitCommand;
+	CCwdCommand		 *cwdCommand = new CCwdCommand;
+	CCDupCommand	 *ccdupCommand = new CCDupCommand;
+	CNoopCommand	*noopCommand = new CNoopCommand;
 
 	m_callbackArray.push_back(logCommand);
 	m_callbackArray.push_back(pwdComand);
 	m_callbackArray.push_back(quitCommand);
+	m_callbackArray.push_back(cwdCommand);
+	m_callbackArray.push_back(ccdupCommand);
+	m_callbackArray.push_back(noopCommand);
 
 	m_callbacks.insert(std::make_pair("user",logCommand));
 	m_callbacks.insert(std::make_pair("pass",logCommand));
 	m_callbacks.insert(std::make_pair("pwd",pwdComand));
 	m_callbacks.insert(std::make_pair("quit",quitCommand));
+	m_callbacks.insert(std::make_pair("cwd",cwdCommand));
+	m_callbacks.insert(std::make_pair("cdup",ccdupCommand));
+	m_callbacks.insert(std::make_pair("noop",noopCommand));
 }
 
 void CFtpServer::processFtpCommand(FTP_Connection_s *conn)
