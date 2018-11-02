@@ -12,6 +12,8 @@ class CFtpServerUIDlg : public CDialogEx
 public:
 	CFtpServerUIDlg(CWnd* pParent = NULL);	// 标准构造函数
 
+	~CFtpServerUIDlg();
+
 // 对话框数据
 	enum { IDD = IDD_FTPSERVERUI_DIALOG };
 

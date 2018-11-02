@@ -6,6 +6,7 @@
 #include <event2/listener.h>
 #include <event2/thread.h>
 #include "Command.h"
+#include "DataServer.h"
 
 #pragma comment(lib,"ws2_32.lib")
 #pragma comment(lib,"../lib/libevent_core.lib")
@@ -46,6 +47,8 @@ CFtpServer::CFtpServer()
 {
 	WSAData	wsaData;
 	WSAStartup(MAKEWORD(2,2),&wsaData);
+	m_pasvFilter = new CPasvFilter;
+	m_loginFilter = new CLogStatusFilter(m_pasvFilter);
 	this->registerCallbacks();
 	this->initServer();
 }
@@ -53,6 +56,8 @@ CFtpServer::CFtpServer()
 CFtpServer::~CFtpServer()
 {
 	WSACleanup();
+	delete m_loginFilter;
+	delete m_pasvFilter;
 	this->unRegisterCallbacks();
 }
 
@@ -66,10 +71,12 @@ void CFtpServer::onAccept(evconnlistener *listener,evutil_socket_t fd, struct so
 	char	msg[]="220 the ftp server is written by mengxl\r\n";
 	bufferevent *bev = bufferevent_socket_new(base,fd,BEV_OPT_CLOSE_ON_FREE);
 	bufferevent_setcb(bev,socket_read_cb,NULL,socket_close_cb,this);
+#ifndef _DEBUG
 	struct timeval tv = { 30, 0 };
 	bufferevent_set_timeouts(bev, &tv, NULL);
+#endif
 	FTP_Connection_s	*conn = new FTP_Connection_s;
-	conn->m_rootDir = TEXT("F:/root");
+	conn->m_rootDir = TEXT("E:/code");
 	conn->m_fd = fd;
 	conn->m_bev = bev;
 	conn->m_status = FTP_CONNECTED;
@@ -79,6 +86,7 @@ void CFtpServer::onAccept(evconnlistener *listener,evutil_socket_t fd, struct so
 	conn->m_workDir = "/";
 	conn->m_commandLen = 0;
 	conn->m_paramLen = 0;
+	conn->m_dataServer = NULL;
 	m_connections.insert(std::make_pair(fd,conn));
 	bufferevent_write(bev,msg,strlen(msg));
 	bufferevent_enable(bev,EV_READ|EV_PERSIST);
@@ -87,7 +95,7 @@ void CFtpServer::onAccept(evconnlistener *listener,evutil_socket_t fd, struct so
 void CFtpServer::onRead(bufferevent *bev)
 {
 	char		buf[1024] = {0};
-	int			bytes = 0;
+	UINT32			bytes = 0;
 	evutil_socket_t	sockfd = bufferevent_getfd(bev);
 	std::map<evutil_socket_t,FTP_Connection_s*>::iterator	tmpItr = m_connections.find(sockfd);
 	if(tmpItr == m_connections.end())
@@ -99,7 +107,7 @@ void CFtpServer::onRead(bufferevent *bev)
 	{
 		if(conn->m_recvLen+bytes > conn->m_recvCapacity)
 		{
-			int		reallocSize = bytes>conn->m_recvCapacity?bytes:conn->m_recvCapacity;
+			UINT32		reallocSize = bytes>conn->m_recvCapacity?bytes:conn->m_recvCapacity;
 			realloc(conn->m_recvBuf,reallocSize*2+2);
 			conn->m_recvCapacity = reallocSize*2;
 		}
@@ -124,6 +132,12 @@ void CFtpServer::onClose(bufferevent *bev,short events)
 		return;
 	}
 	FTP_Connection_s *conn = tmpItr->second;
+	if (conn->m_dataServer)
+	{
+		conn->m_dataServer->StopThread();
+		conn->m_dataServer->WaitThread();
+		delete conn->m_dataServer;
+	}
 	free(conn->m_recvBuf);
 	m_connections.erase(tmpItr);
 	delete conn;
@@ -167,6 +181,14 @@ void CFtpServer::registerCallbacks()
 	CCwdCommand		 *cwdCommand = new CCwdCommand;
 	CCDupCommand	 *ccdupCommand = new CCDupCommand;
 	CNoopCommand	*noopCommand = new CNoopCommand;
+	CPasvCommand	*pasvCommand = new CPasvCommand;
+	CTypeCommand	*typeCommand = new CTypeCommand;
+	CListCommand	*listCommand = new CListCommand;
+	CRetrCommand	*retrCommand = new CRetrCommand;
+	CStoreFileCommand	*storeCommand = new CStoreFileCommand;
+	CMkDirCommand		*mkdCommand = new CMkDirCommand;
+	CRmdCommand			*rmdCommand = new CRmdCommand;
+	CDeleCommand		*deleCommand = new CDeleCommand;
 
 	m_callbackArray.push_back(logCommand);
 	m_callbackArray.push_back(pwdComand);
@@ -174,6 +196,15 @@ void CFtpServer::registerCallbacks()
 	m_callbackArray.push_back(cwdCommand);
 	m_callbackArray.push_back(ccdupCommand);
 	m_callbackArray.push_back(noopCommand);
+	m_callbackArray.push_back(pasvCommand);
+	m_callbackArray.push_back(typeCommand);
+	m_callbackArray.push_back(listCommand);
+	m_callbackArray.push_back(retrCommand);
+	m_callbackArray.push_back(storeCommand);
+	m_callbackArray.push_back(mkdCommand);
+	m_callbackArray.push_back(rmdCommand);
+	m_callbackArray.push_back(deleCommand);
+	
 
 	m_callbacks.insert(std::make_pair("user",logCommand));
 	m_callbacks.insert(std::make_pair("pass",logCommand));
@@ -182,6 +213,14 @@ void CFtpServer::registerCallbacks()
 	m_callbacks.insert(std::make_pair("cwd",cwdCommand));
 	m_callbacks.insert(std::make_pair("cdup",ccdupCommand));
 	m_callbacks.insert(std::make_pair("noop",noopCommand));
+	m_callbacks.insert(std::make_pair("pasv",pasvCommand));
+	m_callbacks.insert(std::make_pair("type", typeCommand));
+	m_callbacks.insert(std::make_pair("list", listCommand));
+	m_callbacks.insert(std::make_pair("retr",retrCommand));
+	m_callbacks.insert(std::make_pair("stor",storeCommand));
+	m_callbacks.insert(std::make_pair("mkd", mkdCommand));
+	m_callbacks.insert(std::make_pair("rmd",rmdCommand));
+	m_callbacks.insert(std::make_pair("dele",deleCommand));
 }
 
 void CFtpServer::processFtpCommand(FTP_Connection_s *conn)
@@ -214,6 +253,12 @@ void CFtpServer::processFtpCommand(FTP_Connection_s *conn)
 			while(*p!='\r' && *(p+1)!='\n')p++;
 			conn->m_paramLen = p - conn->m_param;
 		}
+		BOOL	ret = m_loginFilter->filter(conn);
+		if(!ret)
+		{
+			p = p+2;
+			continue;
+		}
 		memcpy(command,conn->m_command,conn->m_commandLen);
 		std::map<std::string,CFtpCommand*>::iterator tmpItr = m_callbacks.find(command);
 		if(tmpItr!=m_callbacks.end())
@@ -241,6 +286,12 @@ void CFtpServer::closeConnections()
 	while(tmpItr != m_connections.end())
 	{
 		FTP_Connection_s *conn = tmpItr->second;
+		if (conn->m_dataServer)
+		{
+			conn->m_dataServer->StopThread();
+			conn->m_dataServer->WaitThread();
+			delete conn->m_dataServer;
+		}
 		bufferevent_free(conn->m_bev);
 		free(conn->m_recvBuf);
 		delete conn;

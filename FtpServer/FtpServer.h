@@ -2,6 +2,7 @@
 #define FTP_SERVER_INCLUDE_H
 #include "ftp.h"
 #include "BaseThread.h"
+#include "Filter.h"
 #include <vector>
 #include <string>
 
@@ -27,6 +28,8 @@ private:
 	std::map<evutil_socket_t,FTP_Connection_s*>	m_connections;
 	std::map<std::string,CFtpCommand*>	m_callbacks;
 	std::vector<CFtpCommand*>			m_callbackArray;
+	CBaseFilter							*m_loginFilter;
+	CBaseFilter							*m_pasvFilter;
 };
 
 #endif

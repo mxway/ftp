@@ -15,6 +15,8 @@ enum FTP_Status
 	FTP_OPEN_DATA_CHANNEL
 };
 
+class CDataServer;
+
 typedef struct
 {
 	int				m_fd;
@@ -30,6 +32,7 @@ typedef struct
 	char			*m_param;//当前命令的参数值
 	UINT32			m_paramLen;//参数字符长度
 	CStringUtil		m_workDir;//当前工作目录
+	CDataServer		*m_dataServer;//
 }FTP_Connection_s;
 
 class CFtpCommand

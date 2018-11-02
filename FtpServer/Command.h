@@ -44,6 +44,57 @@ public:
 	void		processCommand(FTP_Connection_s *conn);
 };
 
+class CPasvCommand:public CFtpCommand
+{
+public:
+	void		processCommand(FTP_Connection_s *conn);
+private:
+	BOOL		isTcpPortInUse(int port);
+	int			getDataListenPort();
+};
+
+class CTypeCommand :public CFtpCommand
+{
+public:
+	void		processCommand(FTP_Connection_s *conn);
+};
+
+class CListCommand :public CFtpCommand
+{
+public:
+	void		processCommand(FTP_Connection_s *conn);
+};
+
+class CRetrCommand:public CFtpCommand
+{
+public:
+	void		processCommand(FTP_Connection_s *conn);
+};
+
+class CStoreFileCommand:public CFtpCommand
+{
+public:
+	void		processCommand(FTP_Connection_s *conn);
+};
+
+class CMkDirCommand :public CFtpCommand
+{
+public:
+	void		processCommand(FTP_Connection_s *conn);
+};
+
+class CRmdCommand:public CFtpCommand
+{
+public:
+	void		processCommand(FTP_Connection_s *conn);
+};
+
+class CDeleCommand:public CFtpCommand
+{
+public:
+	void		processCommand(FTP_Connection_s *conn);
+};
+
 class CQuitCommand :public CFtpCommand
 {
 public:

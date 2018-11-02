@@ -7,6 +7,7 @@
 #include "FtpServerUIDlg.h"
 #include "afxdialogex.h"
 #include "Command.h"
+#include <iostream>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -101,7 +102,6 @@ BOOL CFtpServerUIDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
-
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -164,11 +164,25 @@ void CFtpServerUIDlg::OnBnClickedButton1()
 	m_server->StartThread();
 }
 
+CFtpServerUIDlg::~CFtpServerUIDlg()
+{
+	if(m_server != NULL)
+	{
+		m_server->StopThread();
+		m_server->WaitThread();
+		delete m_server;
+	}
+}
 
 void CFtpServerUIDlg::OnBnClickedButton2()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	if(m_server==NULL)
+	{
+		return;
+	}
 	m_server->StopThread();
 	m_server->WaitThread();
 	delete m_server;
+	m_server = NULL;
 }

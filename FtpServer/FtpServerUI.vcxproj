@@ -53,7 +53,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Program Files (x86)\Visual Leak Detector\include;%(AdditionalIncludeDirectories);../third-party</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files (x86)\Visual Leak Detector\include;%(AdditionalIncludeDirectories);../third-party;../include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -104,6 +104,8 @@
   <ItemGroup>
     <ClInclude Include="BaseThread.h" />
     <ClInclude Include="Command.h" />
+    <ClInclude Include="DataServer.h" />
+    <ClInclude Include="Filter.h" />
     <ClInclude Include="ftp.h" />
     <ClInclude Include="FtpServer.h" />
     <ClInclude Include="FtpServerUI.h" />
@@ -116,6 +118,8 @@
   <ItemGroup>
     <ClCompile Include="BaseThread.cpp" />
     <ClCompile Include="Command.cpp" />
+    <ClCompile Include="DataServer.cpp" />
+    <ClCompile Include="Filter.cpp" />
     <ClCompile Include="FtpServer.cpp" />
     <ClCompile Include="FtpServerUI.cpp" />
     <ClCompile Include="FtpServerUIDlg.cpp" />

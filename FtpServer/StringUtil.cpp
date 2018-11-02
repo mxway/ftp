@@ -25,6 +25,10 @@ CStringUtil::CStringUtil(LPCTSTR prmStr) : m_Buf(NULL), m_BufLen(0), m_Capacity(
 CStringUtil::CStringUtil(LPCTSTR prmStr,int prmStart,int prmLen):m_Buf(0),m_BufLen(0),m_Capacity(0)
 {
 	Assign(10);
+	if (prmStr == NULL)
+	{
+		return;
+	}
 	int tmpLen = _tcslen(prmStr);
 	if(prmStart + prmLen>tmpLen)
 	{
